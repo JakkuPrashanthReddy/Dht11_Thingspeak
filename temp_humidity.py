@@ -1,34 +1,39 @@
+import AdaFruit_DHT
 import requests
 import time
-import adafruit_dht
-import configuration as conf
+import configurattion as conf
 
 KEY = conf.KEY
+url = 'https://api.thingspeak.com/update'
+def getData(sensor, pin):
+    humidity, temperature = AdaFruit_DHT.read_retry(sensor, pin)
+    return humidity, temperature
 
-def pushData(temp, humidity):
-    '''Takes temperature and humidity readings and pushes data to ThingSpeak cloud'''
-    #Set up request url and parameters
-    url = conf.url
-    params = {'key': KEY, 'field1': temp, 'field2': humidity}
-
-    #Publish values to ThingSpeak
-    res = requests.get(url, params=params)
-    print("Temperature : ",temp,"℃ | Humidity : ",humidity,"%")
-    print("Data pushed on to the cloud successfully...")
-
-
-def getData(pin):
-    try:
-        humidity, temperature = adafruit_dht.read_retry(11, pin)
-        return humidity, temperature
-    except:
-        print("Error reading sensor data")
-        return 0,0
-
-if __name__ == "__main__":
+def pushData(temp,humi):
+    params = {'key': KEY, 
+            'field1': temp, 
+            'field2': humi
+            }
+    res = requests.request('GET', url, params=params)
+    return res.status_code
+if __name__ == '__main__':
     while True:
-        pin = conf.PIN
-        humidity, temp = getData(pin)
-        if humidity!=0 or temp!=0 :
-            pushData(temp,humidity)
-        time.sleep(10)
+        try:
+            sensor = 11
+            pin = 14
+            humidity, temperature = getData(sensor, pin)
+            print("Temp: {0:0.1f} C Humidity: {1:0.1f} %".format(temperature, humidity))
+            response = pushData(temperature, humidity)
+            if response == 200:
+                print("Data pushed to thingspeak.com")
+            elif response == 400:
+                print("Bad request, check your write key")
+
+        except KeyboardInterrupt:
+            print("\nExiting program.")
+            break
+        except Exception as e:
+            print("Error: " + str(e))
+            time.sleep(2.0)
+            continue
+        time.sleep(10) # Wait 10 seconds
