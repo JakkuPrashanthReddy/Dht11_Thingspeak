@@ -4,7 +4,7 @@ import time
 import configurattion as conf
 
 KEY = conf.KEY
-url = 'https://api.thingspeak.com/update'
+url = conf.url
 def getData(sensor, pin):
     humidity, temperature = Adafruit_DHT.read_retry(sensor, pin)
     return humidity, temperature
@@ -20,7 +20,7 @@ if __name__ == '__main__':
     while True:
         try:
             sensor = 11
-            pin = 14
+            pin = conf.PIN
             humidity, temperature = getData(sensor, pin)
             print("Temp: {0:0.1f} C Humidity: {1:0.1f} %".format(temperature, humidity))
             response = pushData(temperature, humidity)
